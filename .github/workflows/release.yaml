@@ -31,7 +31,6 @@ jobs:
       - name: Set environment variables
         run: |
           echo "ARCH=${{ matrix.arch }}" >> "$GITHUB_ENV"
-          echo "OS=${{ matrix.os }}"     >> "$GITHUB_ENV"
           echo "GIT_TAG=$(echo "${{ github.ref_name }}" | sed -e 's/+/-/g')" >> "$GITHUB_ENV"
 
       - name: Download installer
@@ -40,8 +39,7 @@ jobs:
       - name: Publish Image - Docker
         uses: rancher/ecm-distro-tools/actions/publish-image@master
         env:
-          GOARCH: ${{ matrix.arch }}
-          GOOS: ${{ matrix.os }}
+          ARCH: ${{ matrix.arch }}
         with:
           image: ${{ env.IMAGE }}
           tag: ${{ env.GIT_TAG }}-${{ matrix.arch }}
@@ -75,7 +73,6 @@ jobs:
         shell: pwsh
         run: |
           "ARCH=${{ matrix.arch }}" | Out-File -FilePath $env:GITHUB_ENV -Append
-          "OS=${{ matrix.os }}" | Out-File -FilePath $env:GITHUB_ENV -Append
           $sanitizedTag = "${{ github.ref_name }}" -replace '\+', '-'
           "GIT_TAG=$sanitizedTag" | Out-File -FilePath $env:GITHUB_ENV -Append
 
@@ -85,8 +82,7 @@ jobs:
       - name: Publish Image - Docker
         uses: rancher/ecm-distro-tools/actions/publish-image@master
         env:
-          GOARCH: ${{ matrix.arch }}
-          GOOS: ${{ matrix.os }}
+          ARCH: ${{ matrix.arch }}
           NANOSERVER_VERSION: ${{ matrix.NANOSERVER_VERSION }}
         with:
           image: ${{ env.IMAGE }}
@@ -112,8 +108,7 @@ jobs:
       - name: Publish Manifest - Docker
         uses: rancher/ecm-distro-tools/actions/publish-image@master
         env:
-          GOARCH: ${{ matrix.arch }}
-          GOOS: ${{ matrix.os }}
+          ARCH: ${{ matrix.arch }}
           NANOSERVER_VERSION: ${{ matrix.NANOSERVER_VERSION }}
         with:
           image: ${{ env.IMAGE }}
