@@ -9,7 +9,7 @@ permissions:
 
 env:
   IMAGE: system-agent-installer-rke2
-  REPO: rancher
+  REPO: rafiusky
 
 
 jobs:
@@ -36,20 +36,6 @@ jobs:
       - name: Download installer
         run: scripts/download
 
-      - name: Load secrets from Vault
-        uses: rancher-eio/read-vault-secrets@main
-        with:
-          secrets: |
-            secret/data/github/repo/${{ github.repository }}/dockerhub/rancher/credentials username | DOCKER_USERNAME ;
-            secret/data/github/repo/${{ github.repository }}/dockerhub/rancher/credentials password | DOCKER_PASSWORD ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-registry/credentials primeribs |  PRIME_RIBS ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-registry/credentials registry |  PRIME_REGISTRY ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-registry/credentials username |  PRIME_REGISTRY_USERNAME ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-registry/credentials password |  PRIME_REGISTRY_PASSWORD ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-stg-registry/credentials registry |  PRIME_STAGING_REGISTRY;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-stg-registry/credentials username |  PRIME_STAGING_REGISTRY_USERNAME ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-stg-registry/credentials password |  PRIME_STAGING_REGISTRY_PASSWORD ;
-
       - name: Publish Image - Docker
         uses: rancher/ecm-distro-tools/actions/publish-image@master
         env:
@@ -64,44 +50,6 @@ jobs:
           public-username: ${{ env.DOCKER_USERNAME }}
           public-password: ${{ env.DOCKER_PASSWORD }}
           push-to-prime: false
-
-      - name: Publish Image - Staging
-        uses: rancher/ecm-distro-tools/actions/publish-image@master
-        if: ${{ contains(github.ref_name, '-rc') }}
-        env:
-          GOARCH: ${{ matrix.arch }}
-          GOOS: ${{ matrix.os }}
-          PRIME_RIBS: ${{ env.PRIME_RIBS }}
-        with:
-          image: ${{ env.IMAGE }}
-          tag: ${{ github.ref_name }}
-          make-target: push-image
-
-          push-to-public: false
-
-          prime-repo: ${{ env.REPO }}
-          prime-registry: ${{ env.PRIME_STAGING_REGISTRY }}
-          prime-username: ${{ env.PRIME_STAGING_REGISTRY_USERNAME }}
-          prime-password: ${{ env.PRIME_STAGING_REGISTRY_PASSWORD }}
-
-      - name: Publish Image - Prime
-        uses: rancher/ecm-distro-tools/actions/publish-image@master
-        if: ${{ !contains(github.ref_name, '-rc') }}
-        env:
-          GOARCH: ${{ matrix.arch }}
-          GOOS: ${{ matrix.os }}
-          PRIME_RIBS: ${{ env.PRIME_RIBS }}
-        with:
-          image: ${{ env.IMAGE }}
-          tag: ${{ github.ref_name }}
-          make-target: push-image
-
-          push-to-public: false
-
-          prime-repo: ${{ env.REPO }}
-          prime-registry: ${{ env.PRIME_REGISTRY }}
-          prime-username: ${{ env.PRIME_REGISTRY_USERNAME }}
-          prime-password: ${{ env.PRIME_REGISTRY_PASSWORD }}
 
   build-windows:
     strategy:
@@ -129,20 +77,6 @@ jobs:
       - name: Download installer
         run: scripts/windows/download.ps1
 
-      - name: Load secrets from Vault
-        uses: rancher-eio/read-vault-secrets@main
-        with:
-          secrets: |
-            secret/data/github/repo/${{ github.repository }}/dockerhub/rancher/credentials username | DOCKER_USERNAME ;
-            secret/data/github/repo/${{ github.repository }}/dockerhub/rancher/credentials password | DOCKER_PASSWORD ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-registry/credentials primeribs |  PRIME_RIBS ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-registry/credentials registry |  PRIME_REGISTRY ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-registry/credentials username |  PRIME_REGISTRY_USERNAME ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-registry/credentials password |  PRIME_REGISTRY_PASSWORD ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-stg-registry/credentials registry |  PRIME_STAGING_REGISTRY ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-stg-registry/credentials username |  PRIME_STAGING_REGISTRY_USERNAME ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-stg-registry/credentials password |  PRIME_STAGING_REGISTRY_PASSWORD ;
-
       - name: Publish Image - Docker
         uses: rancher/ecm-distro-tools/actions/publish-image@master
         env:
@@ -159,46 +93,6 @@ jobs:
           public-password: ${{ env.DOCKER_PASSWORD }}
           push-to-prime: false
 
-      - name: Publish Image - Staging
-        uses: rancher/ecm-distro-tools/actions/publish-image@master
-        if: ${{ contains(github.ref_name, '-rc') }}
-        env:
-          GOARCH: ${{ matrix.arch }}
-          GOOS: ${{ matrix.os }}
-          NANOSERVER_VERSION: ${{ matrix.NANOSERVER_VERSION }}
-          PRIME_RIBS: ${{ env.PRIME_RIBS }}
-        with:
-          image: ${{ env.IMAGE }}
-          tag: ${{ github.ref_name }}
-          make-target: push-image-windows
-
-          push-to-public: false
-
-          prime-repo: ${{ env.REPO }}
-          prime-registry: ${{ env.PRIME_STAGING_REGISTRY }}
-          prime-username: ${{ env.PRIME_STAGING_REGISTRY_USERNAME }}
-          prime-password: ${{ env.PRIME_STAGING_REGISTRY_PASSWORD }}
-
-      - name: Publish Image - Prime
-        uses: rancher/ecm-distro-tools/actions/publish-image@master
-        if: ${{ !contains(github.ref_name, '-rc') }}
-        env:
-          GOARCH: ${{ matrix.arch }}
-          GOOS: ${{ matrix.os }}
-          NANOSERVER_VERSION: ${{ matrix.NANOSERVER_VERSION }}
-          PRIME_RIBS: ${{ env.PRIME_RIBS }}
-        with:
-          image: ${{ env.IMAGE }}
-          tag: ${{ github.ref_name }}
-          make-target: push-image-windows
-
-          push-to-public: false
-
-          prime-repo: ${{ env.REPO }}
-          prime-registry: ${{ env.PRIME_REGISTRY }}
-          prime-username: ${{ env.PRIME_REGISTRY_USERNAME }}
-          prime-password: ${{ env.PRIME_REGISTRY_PASSWORD }}
-
   create-docker-manifest:
     runs-on: ubuntu-latest
     needs: [ build-linux, build-windows ]
@@ -209,19 +103,6 @@ jobs:
       - name: Set environment variables
         run: |
           . scripts/version
-
-      - name: Load secrets from Vault
-        uses: rancher-eio/read-vault-secrets@main
-        with:
-          secrets: |
-            secret/data/github/repo/${{ github.repository }}/dockerhub/rancher/credentials username | DOCKER_USERNAME ;
-            secret/data/github/repo/${{ github.repository }}/dockerhub/rancher/credentials password | DOCKER_PASSWORD ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-registry/credentials registry |  PRIME_REGISTRY ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-registry/credentials username |  PRIME_REGISTRY_USERNAME ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-registry/credentials password |  PRIME_REGISTRY_PASSWORD ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-stg-registry/credentials registry |  PRIME_STAGING_REGISTRY ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-stg-registry/credentials username |  PRIME_STAGING_REGISTRY_USERNAME ;
-            secret/data/github/repo/${{ github.repository }}/rancher-prime-stg-registry/credentials password |  PRIME_STAGING_REGISTRY_PASSWORD ;
 
       - name: Publish Manifest - Docker
         uses: rancher/ecm-distro-tools/actions/publish-image@master
@@ -241,49 +122,3 @@ jobs:
 
       - name: Inspect Docker image
         run: docker buildx imagetools inspect ${{ env.REPO }}/${{ env.IMAGE }}:${{ env.VERSION }}
-
-      - name: Publish Manifest - Staging
-        uses: rancher/ecm-distro-tools/actions/publish-image@master
-        if: ${{ contains(github.ref_name, '-rc') }}
-        env:
-          GOARCH: ${{ matrix.arch }}
-          GOOS: ${{ matrix.os }}
-          NANOSERVER_VERSION: ${{ matrix.NANOSERVER_VERSION }}
-        with:
-          image: ${{ env.IMAGE }}
-          tag: ${{ github.ref_name }}
-          make-target: publish-manifest
-
-          push-to-public: false
-
-          prime-repo: ${{ env.REPO }}
-          prime-registry: ${{ env.PRIME_STAGING_REGISTRY }}
-          prime-username: ${{ env.PRIME_STAGING_REGISTRY_USERNAME }}
-          prime-password: ${{ env.PRIME_STAGING_REGISTRY_PASSWORD }}
-
-      - name: Inspect Staging image
-        if: ${{ contains(github.ref_name, '-rc') }}
-        run: docker buildx imagetools inspect ${{ env.PRIME_STAGING_REGISTRY }}/${{ env.REPO }}/${{ env.IMAGE }}:${{ env.VERSION }}
-
-      - name: Publish Manifest - Prime
-        uses: rancher/ecm-distro-tools/actions/publish-image@master
-        if: ${{ !contains(github.ref_name, '-rc') }}
-        env:
-          GOARCH: ${{ matrix.arch }}
-          GOOS: ${{ matrix.os }}
-          NANOSERVER_VERSION: ${{ matrix.NANOSERVER_VERSION }}
-        with:
-          image: ${{ env.IMAGE }}
-          tag: ${{ github.ref_name }}
-          make-target: publish-manifest
-
-          push-to-public: false
-
-          prime-repo: ${{ env.REPO }}
-          prime-registry: ${{ env.PRIME_REGISTRY }}
-          prime-username: ${{ env.PRIME_REGISTRY_USERNAME }}
-          prime-password: ${{ env.PRIME_REGISTRY_PASSWORD }}
-
-      - name: Inspect Prime image
-        if: ${{ !contains(github.ref_name, '-rc') }}
-        run: docker buildx imagetools inspect ${{ env.PRIME_REGISTRY }}/${{ env.REPO }}/${{ env.IMAGE }}:${{ env.VERSION }}
