@@ -16,10 +16,15 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: true
-      matrix:
-        os: [ linux ]
-        arch: [ amd64, arm64 ]
+        fail-fast: true
+        matrix:
+          include:
+            - tag-suffix: "amd64"
+              arch: amd64
+              os: linux
+            - tag-suffix: "arm64"
+              arch: arm64
+              os: linux
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -40,9 +45,10 @@ jobs:
         uses: rancher/ecm-distro-tools/actions/publish-image@master
         env:
           ARCH: ${{ matrix.arch }}
+          OS: ${{ matrix.os }}
         with:
           image: ${{ env.IMAGE }}
-          tag: ${{ env.GIT_TAG }}-${{ matrix.arch }}
+          tag: ${{ env.GIT_TAG }}-${{ matrix.tag-suffix }}
           make-target: push-image
 
           public-repo: ${{ env.REPO }}
@@ -51,16 +57,19 @@ jobs:
           push-to-prime: false
 
   build-windows:
+    runs-on: ubuntu-latest
     strategy:
-      matrix:
-        include:
-          - NANOSERVER_VERSION: 1809
-            TAG_SUFFIX: windows-1809-amd64
-            RUNNER: windows-2022
-          - NANOSERVER_VERSION: ltsc2022
-            TAG_SUFFIX: windows-ltsc2022-amd64
-            RUNNER: windows-2022
-    runs-on: ${{ matrix.RUNNER }}
+        fail-fast: true
+        matrix:
+          include:
+            - tag-suffix: "windows-ltsc2022-amd64"
+              nanoserver-version: ltsc2022
+              arch: amd64
+              os: windows
+            - tag-suffix: "windows-1809-amd64"
+              nanoserver-version: 1809
+              arch: amd64
+              os: windows
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -70,11 +79,9 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Set environment variables
-        shell: pwsh
         run: |
-          "ARCH=${{ matrix.arch }}" | Out-File -FilePath $env:GITHUB_ENV -Append
-          $sanitizedTag = "${{ github.ref_name }}" -replace '\+', '-'
-          "GIT_TAG=$sanitizedTag" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "ARCH=${{ matrix.arch }}" >> "$GITHUB_ENV"
+          echo "GIT_TAG=$(echo "${{ github.ref_name }}" | sed -e 's/+/-/g')" >> "$GITHUB_ENV"
 
       - name: Download installer
         run: scripts/windows/download.ps1
@@ -83,10 +90,10 @@ jobs:
         uses: rancher/ecm-distro-tools/actions/publish-image@master
         env:
           ARCH: ${{ matrix.arch }}
-          NANOSERVER_VERSION: ${{ matrix.NANOSERVER_VERSION }}
+          NANOSERVER_VERSION: ${{ matrix.nanoserver-version }}
         with:
           image: ${{ env.IMAGE }}
-          tag: ${{ env.GIT_TAG }}-${{ matrix.TAG_SUFFIX }}
+          tag: ${{ env.GIT_TAG }}-${{ matrix.tag-suffix }}
           make-target: push-image-windows
 
           public-repo: ${{ env.REPO }}
