@@ -16,10 +16,15 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: true
-      matrix:
-        os: [ linux ]
-        arch: [ amd64, arm64 ]
+        fail-fast: true
+        matrix:
+          include:
+            - tag-suffix: "amd64"
+              arch: amd64
+              os: linux
+            - tag-suffix: "arm64"
+              arch: arm64
+              os: linux
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -40,9 +45,10 @@ jobs:
         uses: rancher/ecm-distro-tools/actions/publish-image@master
         env:
           ARCH: ${{ matrix.arch }}
+          OS: ${{ matrix.os }}
         with:
           image: ${{ env.IMAGE }}
-          tag: ${{ env.GIT_TAG }}-${{ matrix.arch }}
+          tag: ${{ env.GIT_TAG }}-${{ matrix.tag-suffix }}
           make-target: push-image
 
           public-repo: ${{ env.REPO }}
@@ -51,16 +57,17 @@ jobs:
           push-to-prime: false
 
   build-windows:
+    runs-on: windows-2022
     strategy:
-      matrix:
-        include:
-          - NANOSERVER_VERSION: 1809
-            TAG_SUFFIX: windows-1809-amd64
-            RUNNER: windows-2022
-          - NANOSERVER_VERSION: ltsc2022
-            TAG_SUFFIX: windows-ltsc2022-amd64
-            RUNNER: windows-2022
-    runs-on: ${{ matrix.RUNNER }}
+        fail-fast: true
+        matrix:
+          include:
+            - tag-suffix: "windows-ltsc2022-amd64"
+              nanoserver-version: ltsc2022
+              arch: amd64
+            - tag-suffix: "windows-1809-amd64"
+              nanoserver-version: 1809
+              arch: amd64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -83,10 +90,10 @@ jobs:
         uses: rancher/ecm-distro-tools/actions/publish-image@master
         env:
           ARCH: ${{ matrix.arch }}
-          NANOSERVER_VERSION: ${{ matrix.NANOSERVER_VERSION }}
+          NANOSERVER_VERSION: ${{ matrix.nanoserver-version }}
         with:
           image: ${{ env.IMAGE }}
-          tag: ${{ env.GIT_TAG }}-${{ matrix.TAG_SUFFIX }}
+          tag: ${{ env.GIT_TAG }}-${{ matrix.tag-suffix }}
           make-target: push-image-windows
 
           public-repo: ${{ env.REPO }}
@@ -107,9 +114,6 @@ jobs:
 
       - name: Publish Manifest - Docker
         uses: rancher/ecm-distro-tools/actions/publish-image@master
-        env:
-          ARCH: ${{ matrix.arch }}
-          NANOSERVER_VERSION: ${{ matrix.NANOSERVER_VERSION }}
         with:
           image: ${{ env.IMAGE }}
           tag: ${{ github.ref_name }}
