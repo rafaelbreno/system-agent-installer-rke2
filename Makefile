@@ -56,9 +56,8 @@ image-build:
 
 .PHONY: image-build-windows
 image-build-windows:
-	docker buildx build \
+	docker build \
 		$(WINDOWS_BUILD_OPTS) \
-		--load \
 		--file ./package/Dockerfile.windows \
 		.
 
