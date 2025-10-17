@@ -1,16 +1,16 @@
-name: CI on Releasing Tag
-
 on:
-  push:
-    tags:
-      - "*"
+  release:
+    types: [published]
 
-env:
-  IMAGE: rancher/system-agent-installer-rke2
-
+name: Release Build and Push
 permissions:
     contents: read
     id-token: write
+
+env:
+  IMAGE: system-agent-installer-rke2
+  REPO: rancher
+
 
 jobs:
   build-linux:
@@ -56,11 +56,11 @@ jobs:
           GOARCH: ${{ matrix.arch }}
           GOOS: ${{ matrix.os }}
         with:
-          image: "system-agent-installer-rke2"
+          image: ${{ env.IMAGE }}
           tag: ${{ github.ref_name }}
           make-target: push-image
 
-          public-repo: rancher
+          public-repo: ${{ env.REPO }}
           public-username: ${{ env.DOCKER_USERNAME }}
           public-password: ${{ env.DOCKER_PASSWORD }}
           push-to-prime: false
@@ -73,13 +73,13 @@ jobs:
           GOOS: ${{ matrix.os }}
           PRIME_RIBS: ${{ env.PRIME_RIBS }}
         with:
-          image: "system-agent-installer-rke2"
+          image: ${{ env.IMAGE }}
           tag: ${{ github.ref_name }}
           make-target: push-image
 
           push-to-public: false
 
-          prime-repo: rancher
+          prime-repo: ${{ env.REPO }}
           prime-registry: ${{ env.PRIME_STAGING_REGISTRY }}
           prime-username: ${{ env.PRIME_STAGING_REGISTRY_USERNAME }}
           prime-password: ${{ env.PRIME_STAGING_REGISTRY_PASSWORD }}
@@ -92,13 +92,13 @@ jobs:
           GOOS: ${{ matrix.os }}
           PRIME_RIBS: ${{ env.PRIME_RIBS }}
         with:
-          image: "system-agent-installer-rke2"
+          image: ${{ env.IMAGE }}
           tag: ${{ github.ref_name }}
           make-target: push-image
 
           push-to-public: false
 
-          prime-repo: rancher
+          prime-repo: ${{ env.REPO }}
           prime-registry: ${{ env.PRIME_REGISTRY }}
           prime-username: ${{ env.PRIME_REGISTRY_USERNAME }}
           prime-password: ${{ env.PRIME_REGISTRY_PASSWORD }}
@@ -150,11 +150,11 @@ jobs:
           GOOS: ${{ matrix.os }}
           NANOSERVER_VERSION: ${{ matrix.NANOSERVER_VERSION }}
         with:
-          image: "system-agent-installer-rke2"
+          image: ${{ env.IMAGE }}
           tag: ${{ github.ref_name }}
           make-target: push-image-windows
 
-          public-repo: rancher
+          public-repo: ${{ env.REPO }}
           public-username: ${{ env.DOCKER_USERNAME }}
           public-password: ${{ env.DOCKER_PASSWORD }}
           push-to-prime: false
@@ -168,13 +168,13 @@ jobs:
           NANOSERVER_VERSION: ${{ matrix.NANOSERVER_VERSION }}
           PRIME_RIBS: ${{ env.PRIME_RIBS }}
         with:
-          image: "system-agent-installer-rke2"
+          image: ${{ env.IMAGE }}
           tag: ${{ github.ref_name }}
           make-target: push-image-windows
 
           push-to-public: false
 
-          prime-repo: rancher
+          prime-repo: ${{ env.REPO }}
           prime-registry: ${{ env.PRIME_STAGING_REGISTRY }}
           prime-username: ${{ env.PRIME_STAGING_REGISTRY_USERNAME }}
           prime-password: ${{ env.PRIME_STAGING_REGISTRY_PASSWORD }}
@@ -188,13 +188,13 @@ jobs:
           NANOSERVER_VERSION: ${{ matrix.NANOSERVER_VERSION }}
           PRIME_RIBS: ${{ env.PRIME_RIBS }}
         with:
-          image: "system-agent-installer-rke2"
+          image: ${{ env.IMAGE }}
           tag: ${{ github.ref_name }}
           make-target: push-image-windows
 
           push-to-public: false
 
-          prime-repo: rancher
+          prime-repo: ${{ env.REPO }}
           prime-registry: ${{ env.PRIME_REGISTRY }}
           prime-username: ${{ env.PRIME_REGISTRY_USERNAME }}
           prime-password: ${{ env.PRIME_REGISTRY_PASSWORD }}
@@ -230,17 +230,17 @@ jobs:
           GOOS: ${{ matrix.os }}
           NANOSERVER_VERSION: ${{ matrix.NANOSERVER_VERSION }}
         with:
-          image: "system-agent-installer-rke2"
+          image: ${{ env.IMAGE }}
           tag: ${{ github.ref_name }}
           make-target: publish-manifest
 
-          public-repo: rancher
+          public-repo: ${{ env.REPO }}
           public-username: ${{ env.DOCKER_USERNAME }}
           public-password: ${{ env.DOCKER_PASSWORD }}
           push-to-prime: false
 
       - name: Inspect Docker image
-        run: docker buildx imagetools inspect ${{ env.IMAGE }}:${{ env.VERSION }}
+        run: docker buildx imagetools inspect ${{ env.REPO }}/${{ env.IMAGE }}:${{ env.VERSION }}
 
       - name: Publish Manifest - Staging
         uses: rancher/ecm-distro-tools/actions/publish-image@master
@@ -250,20 +250,20 @@ jobs:
           GOOS: ${{ matrix.os }}
           NANOSERVER_VERSION: ${{ matrix.NANOSERVER_VERSION }}
         with:
-          image: "system-agent-installer-rke2"
+          image: ${{ env.IMAGE }}
           tag: ${{ github.ref_name }}
           make-target: publish-manifest
 
           push-to-public: false
 
-          prime-repo: rancher
+          prime-repo: ${{ env.REPO }}
           prime-registry: ${{ env.PRIME_STAGING_REGISTRY }}
           prime-username: ${{ env.PRIME_STAGING_REGISTRY_USERNAME }}
           prime-password: ${{ env.PRIME_STAGING_REGISTRY_PASSWORD }}
 
       - name: Inspect Staging image
         if: ${{ contains(github.ref_name, '-rc') }}
-        run: docker buildx imagetools inspect ${{ env.PRIME_STAGING_REGISTRY }}/${{ env.IMAGE }}:${{ env.VERSION }}
+        run: docker buildx imagetools inspect ${{ env.PRIME_STAGING_REGISTRY }}/${{ env.REPO }}/${{ env.IMAGE }}:${{ env.VERSION }}
 
       - name: Publish Manifest - Prime
         uses: rancher/ecm-distro-tools/actions/publish-image@master
@@ -273,17 +273,17 @@ jobs:
           GOOS: ${{ matrix.os }}
           NANOSERVER_VERSION: ${{ matrix.NANOSERVER_VERSION }}
         with:
-          image: "system-agent-installer-rke2"
+          image: ${{ env.IMAGE }}
           tag: ${{ github.ref_name }}
           make-target: publish-manifest
 
           push-to-public: false
 
-          prime-repo: rancher
+          prime-repo: ${{ env.REPO }}
           prime-registry: ${{ env.PRIME_REGISTRY }}
           prime-username: ${{ env.PRIME_REGISTRY_USERNAME }}
           prime-password: ${{ env.PRIME_REGISTRY_PASSWORD }}
 
       - name: Inspect Prime image
         if: ${{ !contains(github.ref_name, '-rc') }}
-        run: docker buildx imagetools inspect ${{ env.PRIME_REGISTRY }}/${{ env.IMAGE }}:${{ env.VERSION }}
+        run: docker buildx imagetools inspect ${{ env.PRIME_REGISTRY }}/${{ env.REPO }}/${{ env.IMAGE }}:${{ env.VERSION }}
