@@ -32,6 +32,7 @@ jobs:
         run: |
           echo "ARCH=${{ matrix.arch }}" >> "$GITHUB_ENV"
           echo "OS=${{ matrix.os }}"     >> "$GITHUB_ENV"
+          echo "GIT_TAG=$(echo "${{ github.ref_name }}" | sed -e 's/+/-/g')" >> "$GITHUB_ENV"
 
       - name: Download installer
         run: scripts/download
@@ -43,7 +44,7 @@ jobs:
           GOOS: ${{ matrix.os }}
         with:
           image: ${{ env.IMAGE }}
-          tag: ${{ github.ref_name }}
+          tag: ${{ env.GIT_TAG }}-${{ matrix.arch }}
           make-target: push-image
 
           public-repo: ${{ env.REPO }}
@@ -71,8 +72,12 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Set environment variables
+        shell: pwsh
         run: |
-          "ARCH=amd64" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "ARCH=${{ matrix.arch }}" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "OS=${{ matrix.os }}" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $sanitizedTag = "${{ github.ref_name }}" -replace '\+', '-'
+          "GIT_TAG=$sanitizedTag" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Download installer
         run: scripts/windows/download.ps1
@@ -85,7 +90,7 @@ jobs:
           NANOSERVER_VERSION: ${{ matrix.NANOSERVER_VERSION }}
         with:
           image: ${{ env.IMAGE }}
-          tag: ${{ github.ref_name }}
+          tag: ${{ env.GIT_TAG }}-${{ matrix.TAG_SUFFIX }}
           make-target: push-image-windows
 
           public-repo: ${{ env.REPO }}
