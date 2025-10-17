@@ -16,13 +16,18 @@ $(TARGETS): .dapper
 
 UNAME_M = $(shell uname -m)
 ifndef TARGET_PLATFORMS
-	ifeq ($(UNAME_M), x86_64)
-		TARGET_PLATFORMS:=linux/amd64
-	else ifeq ($(UNAME_M), aarch64)
-		TARGET_PLATFORMS:=linux/arm64
-	else 
-		TARGET_PLATFORMS:=linux/$(UNAME_M)
-	endif
+    ifeq ($(OS), Windows_NT)
+        TARGET_PLATFORMS := windows/amd64
+    else
+        UNAME_M := $(shell uname -m)
+        ifeq ($(UNAME_M), x86_64)
+            TARGET_PLATFORMS := linux/amd64
+        else ifeq ($(UNAME_M), aarch64)
+            TARGET_PLATFORMS := linux/arm64
+        else
+            TARGET_PLATFORMS := linux/$(UNAME_M)
+        endif
+    endif
 endif
 
 TAG ?= ${GITHUB_ACTION_TAG}
@@ -56,8 +61,9 @@ image-build:
 
 .PHONY: image-build-windows
 image-build-windows:
-	docker build \
+	docker buildx build \
 		$(WINDOWS_BUILD_OPTS) \
+		--load \
 		--file ./package/Dockerfile.windows \
 		.
 
