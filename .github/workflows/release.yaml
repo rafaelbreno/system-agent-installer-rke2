@@ -33,7 +33,7 @@ jobs:
       - name: Set environment variables
         run: |
           . scripts/version
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "SANITIZED_TAG=$(echo "${{ github.ref_name }}" | sed -e 's/+/-/g')" >> "$GITHUB_ENV"
 
       - name: Download installer
         run: scripts/download
@@ -43,7 +43,7 @@ jobs:
         env:
           ARCH: ${{ matrix.arch }}
           OS: ${{ matrix.os }}
-          VERSION: ${{ env.VERSION }}
+          SANITIZED_TAG: ${{ env.SANITIZED_TAG }}
         with:
           image: ${{ env.IMAGE }}
           tag: ${{ github.ref_name }}-${{ matrix.os }}-${{ matrix.arch }}
@@ -78,7 +78,7 @@ jobs:
       - name: Set environment variables
         run: |
           . scripts/version
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "SANITIZED_TAG=$(echo "${{ github.ref_name }}" | sed -e 's/+/-/g')" >> "$GITHUB_ENV"
 
       - name: Download installer
         run: scripts/download
@@ -88,7 +88,7 @@ jobs:
         env:
           ARCH: ${{ matrix.arch }}
           NANOSERVER_VERSION: ${{ matrix.nanoserver-version }}
-          VERSION: ${{ env.VERSION }}
+          SANITIZED_TAG: ${{ env.SANITIZED_TAG }}
         with:
           image: ${{ env.IMAGE }}
           tag: ${{ github.ref_name }}-${{ matrix.os }}-${{ matrix.nanoserver-version }}-${{ matrix.arch }}
@@ -110,12 +110,12 @@ jobs:
       - name: Set environment variables
         run: |
           . scripts/version
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "SANITIZED_TAG=$(echo "${{ github.ref_name }}" | sed -e 's/+/-/g')" >> "$GITHUB_ENV"
 
       - name: Publish Manifest - Docker
         uses: rancher/ecm-distro-tools/actions/publish-image@master
         env:
-          VERSION: ${{ env.VERSION }}
+          SANITIZED_TAG: ${{ env.SANITIZED_TAG }}
         with:
           image: ${{ env.IMAGE }}
           tag: ${{ github.ref_name }}
